@@ -1,0 +1,61 @@
+{
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "iso_url": "http://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.1/FreeBSD-10.1-RELEASE-amd64-disc1.iso",
+      "iso_checksum": "0c3d64ce48c3ef761761d0fea07e1935e296f8c045c249118bc91a7faf053a6b",
+      "iso_checksum_type": "sha256",
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "ssh_wait_timeout": "1000s",
+      "guest_os_type": "FreeBSD_64",
+      "headless": "true",
+      "shutdown_command": "echo 'shutdown -p now' | sudo su -",
+      "boot_wait": "10s",
+      "http_directory": "http",
+      "disk_size": 10240,
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "512"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ]
+      ],
+      "boot_command": [
+        "<esc><wait>",
+        "boot -s<enter>",
+        "<wait10><wait10>",
+        "/bin/sh<enter><wait>",
+        "mdmfs -s 100m md1 /tmp<enter><wait>",
+        "mdmfs -s 100m md2 /mnt<enter><wait>",
+        "dhclient -l /tmp/dhclient.lease.em0 em0<enter><wait>",
+        "fetch -o /tmp/setup http://{{ .HTTPIP }}:{{ .HTTPPort }}/install.sh<enter><wait><wait>",
+        "bsdinstall script /tmp/setup<enter>"
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "output": "./builds/freebsd-10.1-amd64.box",
+      "type": "vagrant"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "scripts": [
+        "scripts/vagrant.sh",
+        "scripts/virtualbox.sh",
+        "scripts/cleanup.sh"
+      ]
+    }
+  ]
+}
